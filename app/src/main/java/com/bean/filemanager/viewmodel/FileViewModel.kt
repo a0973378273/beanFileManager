@@ -1,9 +1,14 @@
 package com.bean.filemanager.viewmodel
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.drawable.Drawable
+import android.net.Uri
+import android.os.Build
 import android.util.Log
+import android.webkit.MimeTypeMap
 import androidx.lifecycle.ViewModel
 import com.bean.filemanager.ui.FileUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,7 +20,7 @@ import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
-class FileViewModel @Inject constructor(@ApplicationContext val context: Context): ViewModel() {
+class FileViewModel @Inject constructor(): ViewModel() {
     private val _uiState = MutableStateFlow(FileUiState())
     val uiState: StateFlow<FileUiState> = _uiState.asStateFlow()
 
@@ -27,10 +32,24 @@ class FileViewModel @Inject constructor(@ApplicationContext val context: Context
         _uiState.value = FileUiState(file = file, list = file.listFiles().asList())
     }
 
-    fun getFileIcon(file: File) {
-        Log.d(javaClass.name, "getFileList")
-        val resolveInfoFlags = PackageManager.ResolveInfoFlags.of(PackageManager.)
-        context.packageManager.queryIntentActivities(Intent(Intent.ACTION_VIEW), )
-        _uiState.value = FileUiState(file = file, list = file.listFiles().asList())
+    fun getFileIcon(file: File, context: Context): Drawable? {
+        Log.d(javaClass.name, "getFileList: ${file.name}")
+        val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(file.extension)
+        context.packageManager.queryIntentActivities(
+            Intent(Intent.ACTION_VIEW).apply {setDataAndType(Uri.fromFile(file), mimeType) },
+            PackageManager.MATCH_DEFAULT_ONLY
+        ).run {
+            Log.d(javaClass.name, "isNotEmpty: ${isNotEmpty()}")
+            if (isNotEmpty()){
+                return get(0).activityInfo.loadIcon(context.packageManager)
+            } else {
+                return null
+            }
+        }
+    }
+
+    fun getParentFile (file: File){
+        val parentFile = file.parentFile
+        _uiState.value = FileUiState(file = parentFile, list = parentFile.listFiles().asList())
     }
 }

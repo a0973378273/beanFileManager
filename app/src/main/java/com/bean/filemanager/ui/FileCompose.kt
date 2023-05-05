@@ -8,10 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -99,12 +96,29 @@ fun TabTitle() {
 fun FileList(fileViewModel: FileViewModel = viewModel()) {
     val uiState by fileViewModel.uiState.collectAsState()
     LazyColumn {
-        items(uiState.list) { item: File ->
-            Text(text = item.name, fontSize = 20.sp, textAlign = TextAlign.Center, modifier = Modifier
-                .heightIn(100.dp)
-                .padding(start = 50.dp)
-                .clickable { fileViewModel.getFileList(item) }
-            )
+        uiState.list?.let {
+            items(it) { item: File ->
+                Row {
+                    Icon(imageVector = Icons.Default., contentDescription = )
+                    Column(modifier = Modifier
+                        .heightIn(100.dp)
+                        .padding(start = 50.dp)
+                        .clickable { fileViewModel.getFileList(item) }) {
+                        Text(
+                            text = item.name,
+                            fontSize = 20.sp,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = fileViewModel.getFileSize(item),
+                            fontSize = 20.sp,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+        } ?: run {
+
         }
     }
 }

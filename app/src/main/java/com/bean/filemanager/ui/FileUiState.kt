@@ -5,5 +5,5 @@ import java.io.File
 
 data class FileUiState(
     val file: File = Environment.getExternalStorageDirectory(),
-    val list: List<File> = listOf()
+    val list: List<File>? = listOf()
 )

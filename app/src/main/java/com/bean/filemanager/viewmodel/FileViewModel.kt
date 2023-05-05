@@ -10,6 +10,7 @@ import android.os.Build
 import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.lifecycle.ViewModel
+import com.bean.filemanager.decimal
 import com.bean.filemanager.ui.FileUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -29,7 +30,7 @@ class FileViewModel @Inject constructor(): ViewModel() {
     }
 
     fun getFileList(file: File) {
-        _uiState.value = FileUiState(file = file, list = file.listFiles().asList())
+        _uiState.value = FileUiState(file = file, list = file.listFiles()?.asList())
     }
 
     fun getFileIcon(file: File, context: Context): Drawable? {
@@ -48,8 +49,32 @@ class FileViewModel @Inject constructor(): ViewModel() {
         }
     }
 
-    fun getParentFile (file: File){
+    fun getParentFile (file: File) {
         val parentFile = file.parentFile
         _uiState.value = FileUiState(file = parentFile, list = parentFile.listFiles().asList())
     }
+
+    fun getFileSize(file: File) : String{
+        if (file.isFile) {
+            file.length().let {
+                if (it > 1024) {
+                    val kbSize = it/1024.0
+                    return if (kbSize > 1024) {
+                        val mbSize = kbSize/1024.0
+                        "${mbSize.decimal(2)} Mb"
+                    } else {
+                        "${kbSize.decimal(2)} Kb"
+                    }
+                } else {
+                    "$it byte"
+                }
+            }
+
+        } else if (file.isDirectory) {
+            return "${file.listFiles()?.size.toString()} 項目"
+
+        }
+        return ""
+    }
+
 }

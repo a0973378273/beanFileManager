@@ -8,11 +8,19 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.outlined.FileCopy
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -98,23 +106,29 @@ fun FileList(fileViewModel: FileViewModel = viewModel()) {
     LazyColumn {
         uiState.list?.let {
             items(it) { item: File ->
-                Row {
-                    Icon(imageVector = Icons.Default., contentDescription = )
-                    Column(modifier = Modifier
-                        .heightIn(100.dp)
-                        .padding(start = 50.dp)
-                        .clickable { fileViewModel.getFileList(item) }) {
-                        Text(
-                            text = item.name,
-                            fontSize = 20.sp,
-                            textAlign = TextAlign.Center
+                    Row {
+                        Icon(
+                            imageVector = if (item.isDirectory) Icons.Outlined.Folder else Icons.Outlined.FileCopy,
+                            contentDescription = "file",
+                            modifier = Modifier
+                                .size(40.dp)
+                                .align(CenterVertically)
                         )
-                        Text(
-                            text = fileViewModel.getFileSize(item),
-                            fontSize = 20.sp,
-                            textAlign = TextAlign.Center
-                        )
-                    }
+                        Column(modifier = Modifier
+                            .fillMaxWidth()
+                            .align(CenterVertically)
+                            .clickable { fileViewModel.getFileList(item) }) {
+                            Text(
+                                text = item.name,
+                                fontSize = 20.sp,
+                                textAlign = TextAlign.Center,
+                            )
+                            Text(
+                                text = fileViewModel.getFileSize(item),
+                                fontSize = 20.sp,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
                 }
             }
         } ?: run {

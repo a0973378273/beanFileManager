@@ -1,19 +1,16 @@
 package com.bean.filemanager.viewmodel
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.net.Uri
-import android.os.Build
 import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.lifecycle.ViewModel
 import com.bean.filemanager.decimal
 import com.bean.filemanager.ui.FileUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -49,11 +46,6 @@ class FileViewModel @Inject constructor(): ViewModel() {
         }
     }
 
-    fun getParentFile (file: File) {
-        val parentFile = file.parentFile
-        _uiState.value = FileUiState(file = parentFile, list = parentFile.listFiles().asList())
-    }
-
     fun getFileSize(file: File) : String{
         if (file.isFile) {
             file.length().let {
@@ -69,7 +61,6 @@ class FileViewModel @Inject constructor(): ViewModel() {
                     "$it byte"
                 }
             }
-
         } else if (file.isDirectory) {
             return "${file.listFiles()?.size.toString()} 項目"
 

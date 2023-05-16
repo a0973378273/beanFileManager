@@ -21,6 +21,7 @@ class MainActivity : ComponentActivity() {
             FileView()
         }
         getFilePermission()
+
     }
 
     private fun getFilePermission() {

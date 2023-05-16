@@ -2,16 +2,14 @@ package com.bean.filemanager.ui
 
 import android.content.Intent
 import android.provider.Settings.ACTION_SETTINGS
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.FileCopy
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material3.*
@@ -57,6 +55,8 @@ fun FileActionBar(fileViewModel: FileViewModel = viewModel()) {
         Box(Modifier.weight(1f)) {
             IconButton(onClick = {
                 uiState.file.parentFile?.let {
+                    //TODO 防止在root做返回
+                    Log.d("test", "FileActionBar: ${it.absoluteFile}")
                     fileViewModel.getFileList(uiState.file.parentFile)
                 }
             })
@@ -77,7 +77,7 @@ fun FileActionBar(fileViewModel: FileViewModel = viewModel()) {
 }
 
 @Composable
-fun TabTitle() {
+fun TabTitle(fileViewModel: FileViewModel = viewModel()) {
     var tabIndex by remember { mutableStateOf(0) }
     val tabTitle = listOf(
         "內部儲存空間",
@@ -92,7 +92,11 @@ fun TabTitle() {
     TabRow(selectedTabIndex = tabIndex, Modifier.background(Color.Red)) {
         tabTitle.forEachIndexed { index, text ->
             Tab(selected = tabIndex == index,
-                onClick = { tabIndex = index },
+                onClick = {
+                    tabIndex = index
+//                    fileViewModel.getFileList()
+                    
+                          },
                 text = { Text(text = text) },
                 icon = { Icon(tabIcon[index], text) }
             )
@@ -106,30 +110,32 @@ fun FileList(fileViewModel: FileViewModel = viewModel()) {
     LazyColumn {
         uiState.list?.let {
             items(it) { item: File ->
-                    Row {
-                        Icon(
-                            imageVector = if (item.isDirectory) Icons.Outlined.Folder else Icons.Outlined.FileCopy,
-                            contentDescription = "file",
-                            modifier = Modifier
-                                .size(40.dp)
-                                .align(CenterVertically)
-                        )
-                        Column(modifier = Modifier
-                            .fillMaxWidth()
+                Row {
+                    Icon(
+                        imageVector = if (item.isDirectory) Icons.Filled.Folder else Icons.Filled.Description,
+                        contentDescription = "file",
+                        modifier = Modifier
+                            .size(40.dp)
+                            .padding(start = 20.dp)
                             .align(CenterVertically)
-                            .clickable { fileViewModel.getFileList(item) }) {
-                            Text(
-                                text = item.name,
-                                fontSize = 20.sp,
-                                textAlign = TextAlign.Center,
-                            )
-                            Text(
-                                text = fileViewModel.getFileSize(item),
-                                fontSize = 20.sp,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
+                    )
+                    Column(modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 20.dp)
+                        .clickable { fileViewModel.getFileList(item) }) {
+                        Text(
+                            text = item.name,
+                            fontSize = 20.sp,
+                            textAlign = TextAlign.Center,
+                        )
+                        Text(
+                            text = fileViewModel.getFileSize(item),
+                            fontSize = 20.sp,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
                 }
+                    Divider()
             }
         } ?: run {
 

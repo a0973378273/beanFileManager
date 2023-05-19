@@ -3,24 +3,43 @@ package com.bean.filemanager.viewmodel
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.bean.filemanager.decimal
-import com.bean.filemanager.getExternalFilePath
-import com.bean.filemanager.getInternalFilePath
+import com.bean.filemanager.extension.decimal
+import com.bean.filemanager.extension.getExternalFilePath
+import com.bean.filemanager.extension.getInternalFilePath
+import com.bean.filemanager.intent.FileIntent
 import com.bean.filemanager.status.FileUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.consumeAsFlow
 import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
 class FileViewModel @Inject constructor() : ViewModel() {
+    val intentChannel = Channel<FileIntent>()
     private val _uiState = MutableStateFlow(FileUiState())
     val uiState: StateFlow<FileUiState> = _uiState.asStateFlow()
 
     init {
         setInternalFileList()
+    }
+
+    private fun handleIntent() {
+
+     intentChannel.consumeAsFlow().collect{
+         when (it) {
+             FileIntent.CopyFile -> TODO()
+             FileIntent.CreateFile -> TODO()
+             FileIntent.CreateFolder -> TODO()
+             FileIntent.DeleteFile -> TODO()
+             FileIntent.FileInfo -> TODO()
+             FileIntent.MoveFile -> TODO()
+             FileIntent.RenameFile -> TODO()
+         }
+     }
     }
 
     fun setFileList(file: File) {

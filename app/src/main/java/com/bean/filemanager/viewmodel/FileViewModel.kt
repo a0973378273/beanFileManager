@@ -1,8 +1,8 @@
 package com.bean.filemanager.viewmodel
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.bean.filemanager.extension.decimal
 import com.bean.filemanager.extension.getExternalFilePath
 import com.bean.filemanager.extension.getInternalFilePath
@@ -14,43 +14,66 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
 class FileViewModel @Inject constructor() : ViewModel() {
-    val intentChannel = Channel<FileIntent>()
+    private val intent = Channel<FileIntent>()
     private val _uiState = MutableStateFlow(FileUiState())
     val uiState: StateFlow<FileUiState> = _uiState.asStateFlow()
 
     init {
-        setInternalFileList()
+        setFileList(File(getInternalFilePath()))
+        handleIntent()
+    }
+
+    fun sendIntent(fileIntent: FileIntent) = viewModelScope.launch {
+        intent.send(fileIntent)
     }
 
     private fun handleIntent() {
+        viewModelScope.launch {
+            intent.consumeAsFlow().collect {
+                when (it) {
+                    is FileIntent.CopyFile -> {
 
-     intentChannel.consumeAsFlow().collect{
-         when (it) {
-             FileIntent.CopyFile -> TODO()
-             FileIntent.CreateFile -> TODO()
-             FileIntent.CreateFolder -> TODO()
-             FileIntent.DeleteFile -> TODO()
-             FileIntent.FileInfo -> TODO()
-             FileIntent.MoveFile -> TODO()
-             FileIntent.RenameFile -> TODO()
-         }
-     }
+                    }
+                    is FileIntent.CreateFile -> {
+                        createFile(it.file)
+                    }
+                    is FileIntent.CreateFolder -> {
+                        createFolder(it.folder)
+                    }
+                    is FileIntent.DeleteFile -> {
+
+                    }
+                    is FileIntent.FileInfo -> TODO()
+                    is FileIntent.MoveFile -> TODO()
+                    is FileIntent.RenameFile -> TODO()
+                    is FileIntent.SelectFile -> setFileList(it.file)
+                    is FileIntent.SelectExternalStorageFile -> setFileList(File(getExternalFilePath(context = it.context)))
+                    FileIntent.SelectInternalStorageFile -> setFileList(File(getInternalFilePath()))
+                }
+            }
+        }
     }
 
-    fun setFileList(file: File) {
+    private fun setFileList(file: File) {
         file.listFiles()?.let {
-            _uiState.value = FileUiState(file = file, list = it.asList())
+            arrayListOf<FileUiState.FileData>().apply {
+                it.asList().forEach {
+                    add(FileUiState.FileData(it, getFileSize(it)))
+                }
+                _uiState.value = FileUiState(file = file, list = this)
+            }
         } ?: run {
             _uiState.value = FileUiState(file = file, isRequirePermission = true)
         }
     }
 
-    fun getFileSize(file: File): String {
+    private fun getFileSize(file: File): String {
         if (file.isFile) {
             file.length().let {
                 if (it > 1024) {
@@ -75,52 +98,37 @@ class FileViewModel @Inject constructor() : ViewModel() {
         return ""
     }
 
-    fun setInternalFileList() {
-        getInternalFilePath().let { path ->
-            File(path).apply {
-                if (exists())
-                    _uiState.value = FileUiState(file = this, list = this.listFiles()?.asList())
-                else
-                    _uiState.value = FileUiState(file = this, list = null)
-            }
-        }
-    }
-
-    fun setExternalFileList(context: Context) {
-        getExternalFilePath(context)?.let { path ->
-            File(path).apply {
-                if (exists())
-                    _uiState.value = FileUiState(file = this, list = this.listFiles()?.asList())
-                else
-                    _uiState.value = FileUiState(file = this, list = null)
-            }
-        } ?: run {
-            _uiState.value = FileUiState(file = File(""), list = null)
-        }
-    }
-
-    fun createFile(file: File) {
+    private fun createFile(file: File) {
         Log.d(javaClass.name, "createFile")
-        if (file.isDirectory) {
-            file.createNewFile()
-            _uiState.value = FileUiState(file = file, list = file.listFiles()?.asList())
-        } else
-            _uiState.value = FileUiState(file = file, list = file.listFiles()?.asList(), errorText = "創建檔案失敗")
-        //TODO error handler
-    }
-
-    fun createFolder(file: File) {
-        Log.d(javaClass.name, "createFolder")
-        if (file.isDirectory) {
-            file.mkdir()
-            _uiState.value = FileUiState(file = file, list = file.listFiles()?.asList())
+        if (file.isFile) {
+            runCatching {
+                file.createNewFile()
+            }.onSuccess {
+                setFileList(file.parentFile)
+            }.onFailure {
+                _uiState.value = FileUiState(file, errorText = "Create file failed")
+            }
         } else {
-            _uiState.value = FileUiState(file = file, list = file.listFiles()?.asList(), errorText = "創建資料夾失敗")
+            _uiState.value = FileUiState(file, errorText = "not File")
         }
-        //TODO error handler
     }
 
-    fun rename(file: File, newName: String) {
+    private fun createFolder(folder: File) {
+        Log.d(javaClass.name, "createFolder")
+        if (folder.isDirectory) {
+            runCatching {
+                folder.mkdir()
+            }.onSuccess {
+                setFileList(folder.parentFile)
+            }.onFailure {
+                _uiState.value = FileUiState(folder, errorText = "Create folder failed")
+            }
+        } else {
+            _uiState.value = FileUiState(folder, errorText = "not folder")
+        }
+    }
+
+    private fun rename(file: File, newName: String) {
         val newFile = File("${file.parentFile}/$newName")
         file.apply {
             if (exists())
@@ -128,7 +136,7 @@ class FileViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    fun delete(file: File) {
+    private fun delete(file: File) {
         if (file.exists())
             file.delete()
     }

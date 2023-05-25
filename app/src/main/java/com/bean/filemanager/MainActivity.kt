@@ -8,9 +8,7 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import com.bean.filemanager.ui.FileView
-import com.bean.filemanager.ui.TabTitle
-import dagger.hilt.android.AndroidEntryPoint
+import com.bean.filemanager.ui.compose.FileView
 
 
 class MainActivity : ComponentActivity() {
@@ -21,7 +19,6 @@ class MainActivity : ComponentActivity() {
             FileView()
         }
         getFilePermission()
-
     }
 
     private fun getFilePermission() {

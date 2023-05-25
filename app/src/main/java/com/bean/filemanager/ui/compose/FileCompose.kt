@@ -1,11 +1,10 @@
-package com.bean.filemanager.ui
+package com.bean.filemanager.ui.compose
 
 import android.content.Intent
 import android.provider.Settings.ACTION_SETTINGS
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,10 +24,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.bean.filemanager.getExternalFilePath
-import com.bean.filemanager.getInternalFilePath
+import com.bean.filemanager.extension.getExternalFilePath
+import com.bean.filemanager.extension.getInternalFilePath
+import com.bean.filemanager.intent.FileIntent
 import com.bean.filemanager.viewmodel.FileViewModel
-import java.io.File
 
 @Preview(showBackground = true)
 @Composable
@@ -68,7 +67,7 @@ fun FileActionBar(fileViewModel: FileViewModel = viewModel()) {
                         Log.w(javaClass.name, "root folder when click back button")
                     } else {
                         Log.d(javaClass.name, "parent file path: ${parentFile.absoluteFile}")
-                        fileViewModel.setFileList(parentFile)
+                        fileViewModel.sendIntent(FileIntent.SelectFile(parentFile))
                     }
                 }
             })
@@ -84,8 +83,8 @@ fun FileActionBar(fileViewModel: FileViewModel = viewModel()) {
                 menuItem.forEach { text ->
                     DropdownMenuItem(text = { Text(text) }, onClick = {
                         when (text) {
-                            "新增檔案" -> fileViewModel.createFile(uiState.file)
-                            "新增資料夾" -> fileViewModel.createFolder(uiState.file)
+                            "新增檔案" -> fileViewModel.sendIntent(FileIntent.CreateFile(uiState.file))
+                            "新增資料夾" -> fileViewModel.sendIntent(FileIntent.CreateFolder(uiState.file))
                         }
                         uiState.errorText?.let { Toast.makeText(context,it,Toast.LENGTH_LONG).show() }
                         expande = false
@@ -125,8 +124,8 @@ fun TabTitle(fileViewModel: FileViewModel = viewModel()) {
                 onClick = {
                     tabIndex = index
                     when (index) {
-                        0 -> fileViewModel.setInternalFileList()
-                        1 -> fileViewModel.setExternalFileList(context)
+                        0 -> fileViewModel.sendIntent(FileIntent.SelectInternalStorageFile)
+                        1 -> fileViewModel.sendIntent(FileIntent.SelectExternalStorageFile(context))
                     }
                 },
                 text = { Text(text = text) },
@@ -151,10 +150,10 @@ fun FileList(fileViewModel: FileViewModel = viewModel()) {
     var expande by remember { mutableStateOf(false) }
     uiState.list?.let {
         LazyColumn {
-            items(it) { item: File ->
+            items(it) { item ->
                 Row {
                     Icon(
-                        imageVector = if (item.isDirectory) Icons.Filled.Folder else Icons.Filled.Description,
+                        imageVector = if (item.file.isDirectory) Icons.Filled.Folder else Icons.Filled.Description,
                         contentDescription = "file",
                         modifier = Modifier
                             .size(40.dp)
@@ -169,17 +168,16 @@ fun FileList(fileViewModel: FileViewModel = viewModel()) {
                                 onLongPress = {
 //                                    showDialog = true
                                               },
-                                onTap = { fileViewModel.setFileList(item) })
+                                onTap = { fileViewModel.sendIntent(FileIntent.SelectFile(item.file)) })
                         }
-
                     ) {
                         Text(
-                            text = item.name,
+                            text = item.file.name,
                             fontSize = 20.sp,
                             textAlign = TextAlign.Center,
                         )
                         Text(
-                            text = fileViewModel.getFileSize(item),
+                            text = item.item,
                             fontSize = 20.sp,
                             textAlign = TextAlign.Center,
                         )
@@ -210,7 +208,7 @@ fun ShowLongClickMenu(fileViewModel: FileViewModel = viewModel()) {
         longClickMenuItem.forEach { text ->
             DropdownMenuItem(text = { Text(text) }, onClick = {
                 when (text) {
-                    "修改名稱" -> fileViewModel.createFile(uiState.file)
+                    "修改名稱" -> {}
                 }
                 expande = false
             })

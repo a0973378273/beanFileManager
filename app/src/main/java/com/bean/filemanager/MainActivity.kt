@@ -24,10 +24,12 @@ class MainActivity : ComponentActivity() {
     private fun getFilePermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-                if (Environment.isExternalStorageManager()) {
-                    println("get file permission in android 11 or above")
+            }.run {
+                if (!Environment.isExternalStorageManager()) {
+                    launch(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
                 }
-            }.launch(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+            }
+
         } else {
 //            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
 //

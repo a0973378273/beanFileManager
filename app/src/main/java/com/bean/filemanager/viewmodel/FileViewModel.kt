@@ -41,7 +41,7 @@ class FileViewModel @Inject constructor() : ViewModel() {
 
                     }
                     is FileIntent.CreateFile -> {
-                        createFile(it.file)
+                        createFile(it.folder, "123.txt")
                     }
                     is FileIntent.CreateFolder -> {
                         createFolder(it.folder)
@@ -60,13 +60,13 @@ class FileViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    private fun setFileList(file: File) {
+    private fun setFileList(file: File, error: String? = null) {
         file.listFiles()?.let {
             arrayListOf<FileUiState.FileData>().apply {
                 it.asList().forEach {
                     add(FileUiState.FileData(it, getFileSize(it)))
                 }
-                _uiState.value = FileUiState(file = file, list = this)
+                _uiState.value = FileUiState(file = file, list = this, errorText = error)
             }
         } ?: run {
             _uiState.value = FileUiState(file = file, isRequirePermission = true)
@@ -98,17 +98,23 @@ class FileViewModel @Inject constructor() : ViewModel() {
         return ""
     }
 
-    private fun createFile(file: File) {
+    private fun createFile(file: File, fileName: String) {
         Log.d(javaClass.name, "createFile")
-        if (file.isFile) {
-            runCatching {
-                file.createNewFile()
-            }.onSuccess {
-                setFileList(file.parentFile)
-            }.onFailure {
-                _uiState.value = FileUiState(file, errorText = "Create file failed")
-            }
+        Log.d(javaClass.name, "file: ${file.path}")
+        val createdFile = File(file.path,fileName)
+        if (file.isDirectory) {
+            if(!createdFile.exists())
+                runCatching {
+                    file.createNewFile()
+                    Log.e(javaClass.name,"createNewFile")
+                }.onSuccess {
+                    setFileList(file)
+                }.onFailure {
+                    Log.e(javaClass.name,it.stackTraceToString())
+                    _uiState.value = FileUiState(file, errorText = "Create file failed")
+                }
         } else {
+            Log.e(javaClass.name,"not directory")
             _uiState.value = FileUiState(file, errorText = "not File")
         }
     }

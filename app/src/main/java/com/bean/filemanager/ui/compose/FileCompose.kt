@@ -28,6 +28,7 @@ import com.bean.filemanager.extension.getExternalFilePath
 import com.bean.filemanager.extension.getInternalFilePath
 import com.bean.filemanager.intent.FileIntent
 import com.bean.filemanager.viewmodel.FileViewModel
+import java.io.File
 
 @Preview(showBackground = true)
 @Composable
@@ -52,7 +53,7 @@ fun FileView() {
 
 @Composable
 fun FileActionBar(fileViewModel: FileViewModel = viewModel()) {
-    val menuItem = arrayOf("新增檔案","新增資料夾")
+    val menuItem = arrayOf("新增檔案", "新增資料夾")
     val uiState by fileViewModel.uiState.collectAsState()
     val context = LocalContext.current
     var expande by remember { mutableStateOf(false) }
@@ -83,10 +84,12 @@ fun FileActionBar(fileViewModel: FileViewModel = viewModel()) {
                 menuItem.forEach { text ->
                     DropdownMenuItem(text = { Text(text) }, onClick = {
                         when (text) {
-                            "新增檔案" -> fileViewModel.sendIntent(FileIntent.CreateFile(uiState.file))
+                            "新增檔案" -> fileViewModel.sendIntent(FileIntent.CreateFile(uiState.file,"123.txt"))
                             "新增資料夾" -> fileViewModel.sendIntent(FileIntent.CreateFolder(uiState.file))
                         }
-                        uiState.errorText?.let { Toast.makeText(context,it,Toast.LENGTH_LONG).show() }
+                        uiState.errorText?.let {
+                            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+                        }
                         expande = false
                     })
                 }
@@ -167,7 +170,7 @@ fun FileList(fileViewModel: FileViewModel = viewModel()) {
                             detectTapGestures(
                                 onLongPress = {
 //                                    showDialog = true
-                                              },
+                                },
                                 onTap = { fileViewModel.sendIntent(FileIntent.SelectFile(item.file)) })
                         }
                     ) {

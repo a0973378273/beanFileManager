@@ -49,9 +49,9 @@ class FileViewModel @Inject constructor() : ViewModel() {
                     is FileIntent.DeleteFile -> {
 
                     }
-                    is FileIntent.FileInfo -> TODO()
-                    is FileIntent.MoveFile -> TODO()
-                    is FileIntent.RenameFile -> TODO()
+                    is FileIntent.FileInfo -> {}
+                    is FileIntent.MoveFile -> {}
+                    is FileIntent.RenameFile -> {}
                     is FileIntent.SelectFile -> setFileList(it.file)
                     is FileIntent.SelectExternalStorageFile -> setFileList(File(getExternalFilePath(context = it.context)))
                     FileIntent.SelectInternalStorageFile -> setFileList(File(getInternalFilePath()))

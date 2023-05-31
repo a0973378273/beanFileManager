@@ -38,6 +38,7 @@ fun DefaultPreview() {
         TabTitle()
         FilePath()
         FileList()
+        BottomBar()
     }
 }
 
@@ -48,6 +49,7 @@ fun FileView() {
         TabTitle()
         FilePath()
         FileList()
+        BottomBar()
     }
 }
 
@@ -195,6 +197,24 @@ fun FileList(fileViewModel: FileViewModel = viewModel()) {
         }
     }
 }
+
+@Composable
+fun BottomBar() {
+    var selectedItem by remember { mutableStateOf(0) }
+    val items = listOf("Songs", "Artists", "Playlists")
+
+    NavigationBar {
+        items.forEachIndexed { index, item ->
+            NavigationBarItem(
+                icon = { Icon(Icons.Filled.Favorite, contentDescription = item) },
+                label = { Text(item) },
+                selected = selectedItem == index,
+                onClick = { selectedItem = index }
+            )
+        }
+    }
+}
+
 
 @Composable
 fun ShowAddMenu() {

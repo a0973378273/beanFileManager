@@ -33,23 +33,25 @@ import java.io.File
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    Column {
-        FileActionBar()
-        TabTitle()
-        FilePath()
-        FileList()
-        BottomBar()
+    Scaffold(bottomBar = { BottomBar() }) {
+        Column {
+            FileActionBar()
+            TabTitle()
+            FilePath()
+            FileList()
+        }
     }
 }
 
 @Composable
 fun FileView() {
-    Column {
-        FileActionBar()
-        TabTitle()
-        FilePath()
-        FileList()
-        BottomBar()
+    Scaffold(bottomBar = { BottomBar() }) {
+        Column {
+            FileActionBar()
+            TabTitle()
+            FilePath()
+            FileList()
+        }
     }
 }
 

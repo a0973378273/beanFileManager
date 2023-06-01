@@ -53,7 +53,7 @@ class FileViewModel @Inject constructor() : ViewModel() {
                     is FileIntent.MoveFile -> {}
                     is FileIntent.RenameFile -> {}
                     is FileIntent.SelectFile -> setFileList(it.file)
-                    is FileIntent.SelectExternalStorageFile -> setFileList(File(getExternalFilePath(context = it.context)))
+                    is FileIntent.SelectExternalStorageFile -> setFileList(File(getExternalFilePath(context = it.context)?:""))
                     FileIntent.SelectInternalStorageFile -> setFileList(File(getInternalFilePath()))
                 }
             }

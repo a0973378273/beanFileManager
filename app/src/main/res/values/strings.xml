@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">fileManager</string>
+    <string name="external">SDCard</string>
+    <string name="internal">內部儲存空間</string>
+    <string name="create_file">新增檔案</string>
+    <string name="create_folder">新增資料夾</string>
+    <string name="rename">重新命名</string>
+    <string name="copy">複製</string>
+    <string name="move">移動</string>
+    <string name="delete">刪除</string>
+    <string name="info">屬性</string>
 </resources>

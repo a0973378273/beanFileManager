@@ -6,58 +6,57 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.bean.filemanager.R
 import com.bean.filemanager.extension.getExternalFilePath
 import com.bean.filemanager.extension.getInternalFilePath
 import com.bean.filemanager.intent.FileIntent
 import com.bean.filemanager.viewmodel.FileViewModel
-import java.io.File
 
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    Scaffold(bottomBar = { BottomBar() }) {
-        Column {
-            FileActionBar()
-            TabTitle()
-            FilePath()
-            FileList()
-        }
+    Column {
+        FileActionBar()
+        TabTitle()
+        FilePath()
+        FileList()
     }
 }
 
 @Composable
 fun FileView() {
-    Scaffold(bottomBar = { BottomBar() }) {
-        Column {
-            FileActionBar()
-            TabTitle()
-            FilePath()
-            FileList()
-        }
+    Column {
+        FileActionBar()
+        TabTitle()
+        FilePath()
+        FileList()
     }
 }
 
 @Composable
 fun FileActionBar(fileViewModel: FileViewModel = viewModel()) {
-    val menuItem = arrayOf("新增檔案", "新增資料夾")
+    val menuItem = arrayOf(R.string.create_file, R.string.create_folder)
     val uiState by fileViewModel.uiState.collectAsState()
     val context = LocalContext.current
     var expande by remember { mutableStateOf(false) }
@@ -85,11 +84,20 @@ fun FileActionBar(fileViewModel: FileViewModel = viewModel()) {
                 Icon(imageVector = Icons.Filled.Add, contentDescription = "Add")
             }
             DropdownMenu(expanded = expande, onDismissRequest = { expande = false }) {
-                menuItem.forEach { text ->
-                    DropdownMenuItem(text = { Text(text) }, onClick = {
-                        when (text) {
-                            "新增檔案" -> fileViewModel.sendIntent(FileIntent.CreateFile(uiState.file,"123.txt"))
-                            "新增資料夾" -> fileViewModel.sendIntent(FileIntent.CreateFolder(uiState.file))
+                menuItem.forEach { textRes ->
+                    DropdownMenuItem(text = { Text(stringResource(textRes)) }, onClick = {
+                        when (textRes) {
+                            R.string.create_file -> fileViewModel.sendIntent(
+                                FileIntent.CreateFile(
+                                    uiState.file,
+                                    "123.txt"
+                                )
+                            )
+                            R.string.create_folder -> fileViewModel.sendIntent(
+                                FileIntent.CreateFolder(
+                                    uiState.file
+                                )
+                            )
                         }
                         uiState.errorText?.let {
                             Toast.makeText(context, it, Toast.LENGTH_LONG).show()
@@ -115,9 +123,9 @@ fun FileActionBar(fileViewModel: FileViewModel = viewModel()) {
 fun TabTitle(fileViewModel: FileViewModel = viewModel()) {
     val context = LocalContext.current
     var tabIndex by remember { mutableStateOf(0) }
-    val tabTitle = listOf(
-        "內部儲存空間",
-        "SDCard",
+    val tabTitleRes = listOf(
+        R.string.internal,
+        R.string.external,
     )
 
     val tabIcon = listOf(
@@ -126,17 +134,21 @@ fun TabTitle(fileViewModel: FileViewModel = viewModel()) {
     )
 
     TabRow(selectedTabIndex = tabIndex, Modifier.background(Color.Red)) {
-        tabTitle.forEachIndexed { index, text ->
+        tabTitleRes.forEachIndexed { index, text ->
             Tab(selected = tabIndex == index,
                 onClick = {
                     tabIndex = index
-                    when (index) {
-                        0 -> fileViewModel.sendIntent(FileIntent.SelectInternalStorageFile)
-                        1 -> fileViewModel.sendIntent(FileIntent.SelectExternalStorageFile(context))
+                    when (text) {
+                        R.string.internal -> fileViewModel.sendIntent(FileIntent.SelectInternalStorageFile)
+                        R.string.external -> fileViewModel.sendIntent(
+                            FileIntent.SelectExternalStorageFile(
+                                context
+                            )
+                        )
                     }
                 },
-                text = { Text(text = text) },
-                icon = { Icon(tabIcon[index], text) }
+                text = { Text(text = stringResource(text)) },
+                icon = { Icon(tabIcon[index], stringResource(text)) }
             )
         }
     }
@@ -146,97 +158,121 @@ fun TabTitle(fileViewModel: FileViewModel = viewModel()) {
 fun FilePath(fileViewModel: FileViewModel = viewModel()) {
     val uiState by fileViewModel.uiState.collectAsState()
     uiState.file.absoluteFile
-    //不顯示 root path
+    //TODO 不顯示 root path
 }
 
 @Composable
 fun FileList(fileViewModel: FileViewModel = viewModel()) {
     val uiState by fileViewModel.uiState.collectAsState()
-//    var showDialog by remember { mutableStateOf(false) }
-    val longClickMenuItem = arrayOf("修改名稱")
-    var expande by remember { mutableStateOf(false) }
-    uiState.list?.let {
-        LazyColumn {
-            items(it) { item ->
-                Row {
-                    Icon(
-                        imageVector = if (item.file.isDirectory) Icons.Filled.Folder else Icons.Filled.Description,
-                        contentDescription = "file",
-                        modifier = Modifier
-                            .size(40.dp)
-                            .padding(start = 20.dp)
-                            .align(CenterVertically)
-                    )
-                    Column(modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 20.dp)
-                        .pointerInput(Unit) {
-                            detectTapGestures(
-                                onLongPress = {
-//                                    showDialog = true
-                                },
-                                onTap = { fileViewModel.sendIntent(FileIntent.SelectFile(item.file)) })
-                        }
+    var showNavigate by remember { mutableStateOf(false) }
+    var selectItemIndex by remember { mutableStateOf(-1) }
+    Box(Modifier.fillMaxSize()) {
+        uiState.list?.let {
+            LazyColumn {
+                itemsIndexed(it) { index, item ->
+                    Row(
+                        Modifier.background(if (index == selectItemIndex) Color.Gray else Color.White)
                     ) {
-                        Text(
-                            text = item.file.name,
-                            fontSize = 20.sp,
-                            textAlign = TextAlign.Center,
+                        Icon(
+                            imageVector = if (item.file.isDirectory) Icons.Filled.Folder else Icons.Filled.Description,
+                            contentDescription = "file",
+                            modifier = Modifier
+                                .size(40.dp)
+                                .padding(start = 20.dp)
+                                .align(CenterVertically)
                         )
-                        Text(
-                            text = item.item,
-                            fontSize = 20.sp,
-                            textAlign = TextAlign.Center,
-                        )
+                        Column(modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 20.dp)
+                            .pointerInput(MutableInteractionSource()) {
+                                detectTapGestures(
+                                    onLongPress = {
+                                        Log.d(javaClass.name, "onLongPress")
+                                        showNavigate = true
+                                        selectItemIndex = index
+                                    },
+                                    onTap = {
+                                        Log.d(javaClass.name, "onTap")
+                                        showNavigate = false
+                                        fileViewModel.sendIntent(
+                                            FileIntent.SelectFile(
+                                                item.file
+                                            )
+                                        )
+                                    })
+                            }
+                        ) {
+                            Text(
+                                text = item.file.name,
+                                fontSize = 20.sp,
+                                textAlign = TextAlign.Center,
+                            )
+                            Text(
+                                text = item.item,
+                                fontSize = 20.sp,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
                     }
+                    Divider()
                 }
-                Divider()
+            }
+        } ?: run {
+            //TODO 未顯示
+            Box(Modifier.align(Center)) {
+                Text(text = "無項目", fontSize = 20.sp)
             }
         }
-    } ?: run {
-        Box(Modifier.fillMaxSize(), Center) {
-            Text(text = "無項目", fontSize = 20.sp)
+        Box(Modifier.align(Alignment.BottomCenter)) {
+            if (showNavigate) {
+                BottomBar {
+                    showNavigate = false
+                }
+            }
         }
     }
 }
 
 @Composable
-fun BottomBar() {
+fun BottomBar(onClick: () -> Unit) {
     var selectedItem by remember { mutableStateOf(0) }
-    val items = listOf("Songs", "Artists", "Playlists")
-
+    val items =
+        listOf(R.string.copy, R.string.move, R.string.rename, R.string.delete, R.string.info)
     NavigationBar {
         items.forEachIndexed { index, item ->
             NavigationBarItem(
-                icon = { Icon(Icons.Filled.Favorite, contentDescription = item) },
-                label = { Text(item) },
+                icon = {
+                    when (item) {
+                        R.string.info -> Icon(
+                            Icons.Filled.Info,
+                            contentDescription = stringResource(item)
+                        )
+                        R.string.delete -> Icon(
+                            Icons.Filled.Delete,
+                            contentDescription = stringResource(item)
+                        )
+                        R.string.copy -> Icon(
+                            Icons.Filled.ContentCopy,
+                            contentDescription = stringResource(item)
+                        )
+                        R.string.move -> Icon(
+                            Icons.Filled.ContentCut,
+                            contentDescription = stringResource(item)
+                        )
+                        R.string.rename -> Icon(
+                            Icons.Filled.FormatItalic,
+                            contentDescription = stringResource(item)
+                        )
+                    }
+                },
+                label = { Text(stringResource(item)) },
                 selected = selectedItem == index,
-                onClick = { selectedItem = index }
-            )
-        }
-    }
-}
-
-
-@Composable
-fun ShowAddMenu() {
-
-}
-
-@Composable
-fun ShowLongClickMenu(fileViewModel: FileViewModel = viewModel()) {
-    Log.d("test", "ShowLongClickMenu")
-    val uiState by fileViewModel.uiState.collectAsState()
-    val longClickMenuItem = arrayOf("修改名稱")
-    var expande by remember { mutableStateOf(true) }
-    DropdownMenu(expanded = expande, onDismissRequest = { expande = false }) {
-        longClickMenuItem.forEach { text ->
-            DropdownMenuItem(text = { Text(text) }, onClick = {
-                when (text) {
-                    "修改名稱" -> {}
+                onClick = {
+                    selectedItem = index
+                    onClick.invoke()
+                    //TODO viewModel
                 }
-                expande = false
-            })
+            )
         }
     }
 }

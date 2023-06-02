@@ -32,6 +32,7 @@ import com.bean.filemanager.extension.getExternalFilePath
 import com.bean.filemanager.extension.getInternalFilePath
 import com.bean.filemanager.intent.FileIntent
 import com.bean.filemanager.viewmodel.FileViewModel
+import java.io.File
 
 @Preview(showBackground = true)
 @Composable
@@ -157,8 +158,15 @@ fun TabTitle(fileViewModel: FileViewModel = viewModel()) {
 @Composable
 fun FilePath(fileViewModel: FileViewModel = viewModel()) {
     val uiState by fileViewModel.uiState.collectAsState()
-    uiState.file.absoluteFile
-    //TODO 不顯示 root path
+    if(uiState.file.path.isNotEmpty()) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .background(Color.LightGray)
+        ) {
+            Text(text = uiState.file.path, fontSize = 20.sp)
+        }
+    }
 }
 
 @Composable
@@ -167,60 +175,61 @@ fun FileList(fileViewModel: FileViewModel = viewModel()) {
     var showNavigate by remember { mutableStateOf(false) }
     var selectItemIndex by remember { mutableStateOf(-1) }
     Box(Modifier.fillMaxSize()) {
-        uiState.list?.let {
-            LazyColumn {
-                itemsIndexed(it) { index, item ->
-                    Row(
-                        Modifier.background(if (index == selectItemIndex) Color.Gray else Color.White)
-                    ) {
-                        Icon(
-                            imageVector = if (item.file.isDirectory) Icons.Filled.Folder else Icons.Filled.Description,
-                            contentDescription = "file",
-                            modifier = Modifier
-                                .size(40.dp)
-                                .padding(start = 20.dp)
-                                .align(CenterVertically)
-                        )
-                        Column(modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 20.dp)
-                            .pointerInput(MutableInteractionSource()) {
-                                detectTapGestures(
-                                    onLongPress = {
-                                        Log.d(javaClass.name, "onLongPress")
-                                        showNavigate = true
-                                        selectItemIndex = index
-                                    },
-                                    onTap = {
-                                        Log.d(javaClass.name, "onTap")
-                                        showNavigate = false
-                                        fileViewModel.sendIntent(
-                                            FileIntent.SelectFile(
-                                                item.file
-                                            )
-                                        )
-                                    })
-                            }
-                        ) {
-                            Text(
-                                text = item.file.name,
-                                fontSize = 20.sp,
-                                textAlign = TextAlign.Center,
-                            )
-                            Text(
-                                text = item.item,
-                                fontSize = 20.sp,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-                    }
-                    Divider()
+        uiState.list.let {
+            if (it.isNullOrEmpty()) {
+                Box(Modifier.align(Center)) {
+                    Text(text = "無項目", fontSize = 20.sp)
                 }
-            }
-        } ?: run {
-            //TODO 未顯示
-            Box(Modifier.align(Center)) {
-                Text(text = "無項目", fontSize = 20.sp)
+            } else {
+                LazyColumn {
+                    itemsIndexed(it) { index, item ->
+                        Row(
+                            Modifier.background(if (index == selectItemIndex) Color.Gray else Color.White)
+                        ) {
+                            Icon(
+                                imageVector = if (item.file.isDirectory) Icons.Filled.Folder else Icons.Filled.Description,
+                                contentDescription = "file",
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .padding(start = 20.dp)
+                                    .align(CenterVertically)
+                            )
+                            Column(modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 20.dp)
+                                .pointerInput(MutableInteractionSource()) {
+                                    detectTapGestures(
+                                        onLongPress = {
+                                            Log.d(javaClass.name, "onLongPress")
+                                            showNavigate = true
+                                            selectItemIndex = index
+                                        },
+                                        onTap = {
+                                            Log.d(javaClass.name, "onTap")
+                                            showNavigate = false
+                                            fileViewModel.sendIntent(
+                                                FileIntent.SelectFile(
+                                                    item.file
+                                                )
+                                            )
+                                        })
+                                }
+                            ) {
+                                Text(
+                                    text = item.file.name,
+                                    fontSize = 20.sp,
+                                    textAlign = TextAlign.Center,
+                                )
+                                Text(
+                                    text = item.item,
+                                    fontSize = 20.sp,
+                                    textAlign = TextAlign.Center,
+                                )
+                            }
+                        }
+                        Divider()
+                    }
+                }
             }
         }
         Box(Modifier.align(Alignment.BottomCenter)) {
@@ -234,7 +243,7 @@ fun FileList(fileViewModel: FileViewModel = viewModel()) {
 }
 
 @Composable
-fun BottomBar(onClick: () -> Unit) {
+fun BottomBar(fileViewModel: FileViewModel = viewModel(), onClick: () -> Unit) {
     var selectedItem by remember { mutableStateOf(0) }
     val items =
         listOf(R.string.copy, R.string.move, R.string.rename, R.string.delete, R.string.info)
@@ -270,7 +279,29 @@ fun BottomBar(onClick: () -> Unit) {
                 onClick = {
                     selectedItem = index
                     onClick.invoke()
-                    //TODO viewModel
+                    //TODO view action
+                    when (item) {
+                        R.string.info -> fileViewModel.sendIntent(FileIntent.FileInfo(File("")))
+                        R.string.delete -> fileViewModel.sendIntent(FileIntent.DeleteFile(File("")))
+                        R.string.copy -> fileViewModel.sendIntent(
+                            FileIntent.CopyFile(
+                                File(""),
+                                File("")
+                            )
+                        )
+                        R.string.move -> fileViewModel.sendIntent(
+                            FileIntent.MoveFile(
+                                File(""),
+                                File("")
+                            )
+                        )
+                        R.string.rename -> fileViewModel.sendIntent(
+                            FileIntent.RenameFile(
+                                File(""),
+                                File("")
+                            )
+                        )
+                    }
                 }
             )
         }

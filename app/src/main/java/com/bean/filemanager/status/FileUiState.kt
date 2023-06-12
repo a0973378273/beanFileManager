@@ -6,6 +6,7 @@ import java.io.File
 data class FileUiState(
     val file: File = Environment.getExternalStorageDirectory(),
     val list: List<FileData>? = listOf(),
+    val listSelected: File? = null,
     val isRequirePermission: Boolean = false,
     var errorText: String? = null
 ) {

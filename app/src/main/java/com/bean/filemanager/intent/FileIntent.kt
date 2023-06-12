@@ -5,6 +5,7 @@ import java.io.File
 
 sealed class FileIntent {
     class SelectFile(val file: File): FileIntent()
+    class SelectList(val file: File): FileIntent()
     object SelectInternalStorageFile : FileIntent()
     class SelectExternalStorageFile(val context: Context): FileIntent()
     class DeleteFile(val file: File): FileIntent()

@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
 import java.io.File
+import java.nio.file.Files.delete
+import java.nio.file.Files.exists
 import javax.inject.Inject
 
 @HiltViewModel
@@ -47,26 +49,41 @@ class FileViewModel @Inject constructor() : ViewModel() {
                         createFolder(it.folder)
                     }
                     is FileIntent.DeleteFile -> {
-
+                        delete(it.file)
                     }
                     is FileIntent.FileInfo -> {}
                     is FileIntent.MoveFile -> {}
-                    is FileIntent.RenameFile -> {}
+                    is FileIntent.RenameFile -> rename(it.newFile, it.oldFile)
                     is FileIntent.SelectFile -> setFileList(it.file)
-                    is FileIntent.SelectExternalStorageFile -> setFileList(File(getExternalFilePath(context = it.context)?:""))
-                    FileIntent.SelectInternalStorageFile -> setFileList(File(getInternalFilePath()))
+                    is FileIntent.SelectExternalStorageFile -> setFileList(
+                        File(
+                            getExternalFilePath(
+                                context = it.context
+                            ) ?: ""
+                        )
+                    )
+                    is FileIntent.SelectInternalStorageFile -> setFileList(File(getInternalFilePath()))
+                    is FileIntent.SelectList -> setFileList(
+                        file = it.file.parentFile,
+                        selectFile = it.file
+                    )
                 }
             }
         }
     }
 
-    private fun setFileList(file: File, error: String? = null) {
+    private fun setFileList(file: File, selectFile: File? = null, error: String? = null) {
         file.listFiles()?.let {
             arrayListOf<FileUiState.FileData>().apply {
                 it.asList().forEach {
                     add(FileUiState.FileData(it, getFileSize(it)))
                 }
-                _uiState.value = FileUiState(file = file, list = this, errorText = error)
+                _uiState.value = FileUiState(
+                    file = file,
+                    list = this,
+                    listSelected = selectFile,
+                    errorText = error
+                )
             }
         } ?: run {
             _uiState.value = FileUiState(file = file, isRequirePermission = true)
@@ -101,20 +118,20 @@ class FileViewModel @Inject constructor() : ViewModel() {
     private fun createFile(file: File, fileName: String) {
         Log.d(javaClass.name, "createFile")
         Log.d(javaClass.name, "file: ${file.path}")
-        val createdFile = File(file.path,fileName)
+        val createdFile = File(file.path, fileName)
         if (file.isDirectory) {
-            if(!createdFile.exists())
+            if (!createdFile.exists())
                 runCatching {
                     file.createNewFile()
-                    Log.e(javaClass.name,"createNewFile")
+                    Log.e(javaClass.name, "createNewFile")
                 }.onSuccess {
                     setFileList(file)
                 }.onFailure {
-                    Log.e(javaClass.name,it.stackTraceToString())
+                    Log.e(javaClass.name, it.stackTraceToString())
                     _uiState.value = FileUiState(file, errorText = "Create file failed")
                 }
         } else {
-            Log.e(javaClass.name,"not directory")
+            Log.e(javaClass.name, "not directory")
             _uiState.value = FileUiState(file, errorText = "not File")
         }
     }
@@ -134,16 +151,38 @@ class FileViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    private fun rename(file: File, newName: String) {
-        val newFile = File("${file.parentFile}/$newName")
-        file.apply {
-            if (exists())
-                renameTo(newFile)
+    private fun rename(newFile: File, oldFile: File) {
+        oldFile.apply {
+            if (exists()) {
+                if (renameTo(newFile)) {
+                    setFileList(_uiState.value.file)
+                } else {
+                    setFileList(
+                        _uiState.value.file,
+                        error = "rename file failed, because it is not renamed"
+                    )
+                }
+            } else {
+                setFileList(
+                    _uiState.value.file,
+                    error = "rename file failed, because it is not exist"
+                )
+            }
         }
     }
 
     private fun delete(file: File) {
-        if (file.exists())
-            file.delete()
+        if (file.exists()) {
+            if (file.delete()) {
+                setFileList(_uiState.value.file)
+            } else {
+                setFileList(
+                    _uiState.value.file,
+                    error = "delete file failed, because it is not deleted"
+                )
+            }
+        } else {
+            setFileList(_uiState.value.file, error = "delete file failed, because it is not exist")
+        }
     }
 }
